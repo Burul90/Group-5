@@ -1,0 +1,386 @@
+package SeleniumProject3;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+public class Project3 {
+
+    WebDriver driver;
+
+    @BeforeClass
+    public void setUp() {
+        WebDriverManager.chromedriver().setup();
+        driver = new ChromeDriver();
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        driver.manage().window().maximize();
+    }
+    //Alternative Case1 solution
+//    @Test
+//    public void test1() {
+//        WebDriverManager.chromedriver().setup();
+//        WebDriver driver = new ChromeDriver();
+//        driver.manage().window().maximize();
+//        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+//        driver.navigate().to("http://automationpractice.com/index.php");
+//        Actions actions= new Actions(driver);
+//        WebElement cart = driver.findElement(By.xpath("//a[@title='View my shopping cart']"));
+//        String actualcartText = cart.getText();
+//        String expectedCartText = "Cart (empty)";
+//        Assert.assertTrue(cart.isDisplayed());
+//        Assert.assertEquals(actualcartText, expectedCartText);
+//        System.out.println(cart.getText());
+//        String itemPath = "//ul[@id='homefeatured']//li[contains(@class, 'ajax_block_product')]";
+//        String pricePath = "//div[@class='right-block']//span[@itemprop='price']";
+//        String nameItemPath = "//div[@class='right-block']//a[@class='product-name']";
+//        String oldPricePath = "//div[@class='right-block']//span[@class='old-price product-price']";
+//        List<WebElement> itemes = driver.findElements(By.xpath(itemPath));
+//        double minPrice = 100000000;
+//        String fullPricePath = "";
+//        int numberOfElement = 0;
+//        for (int i = 0; i < itemes.size(); i++) {
+//            fullPricePath = itemPath + "[" + (i + 1) + "]" + pricePath;
+//            String price = driver.findElement(By.xpath(fullPricePath)).getText().trim().replace("$", "");
+//            double priceDouble = Double.parseDouble(price);
+//            if(priceDouble<=minPrice){
+//                minPrice=priceDouble;
+//                numberOfElement = i + 1;
+//            }
+//        }
+//        String fullNamePath = itemPath +"[" +numberOfElement+ "]" + nameItemPath;
+//        String nameItem = driver.findElement(By.xpath(fullNamePath)).getText();
+//        System.out.println("Lowest price is $"+minPrice +" for item "+ nameItem);
+//        String fullOldPricePath = itemPath +"[" +numberOfElement+ "]" + oldPricePath;
+//        String oldPrice = driver.findElement(By.xpath(fullOldPricePath)).getText().trim().replace("$", "");
+//        System.out.println("Old price of "+nameItem+" is $"+oldPrice);
+//        String discountRatePath = "//div[@class='right-block']//span[@class='price-percent-reduction']";
+//        String fullFiscountRatePath =  itemPath +"[" +numberOfElement+ "]" + discountRatePath;
+//        String discountRate = driver.findElement(By.xpath(fullFiscountRatePath)).getText().trim().substring(1);
+//        System.out.println("Discount rate of product is "+discountRate);
+//        double oldPriceDouble = Double.parseDouble(oldPrice);
+//        double discountPercent = Double.parseDouble(discountRate.replace("%", ""))/100;
+//        double newPrice=minPrice;
+//        double finalDiscountPrice=oldPriceDouble-oldPriceDouble*discountPercent;
+//        System.out.println("Descount price is "+finalDiscountPrice);
+//        Assert.assertTrue(newPrice==finalDiscountPrice);
+//    }
+
+    @Test
+    public void case1() throws InterruptedException {
+        WebDriverManager.chromedriver().setup();
+        WebDriver driver = new ChromeDriver();
+        driver.get("http://automationpractice.com/index.php");
+        Actions actions = new Actions(driver);
+
+        //Validate Cart (empty) text is displayed
+        WebElement cart = driver.findElement(By.xpath("//a[@title='View my shopping cart']"));
+        String actualcartText = cart.getText();
+        String expectedCartText = "Cart (empty)";
+        Assert.assertTrue(cart.isDisplayed());
+        Assert.assertEquals(actualcartText, expectedCartText);
+        System.out.println(cart.getText());
+
+        //Get all the product prices
+        List<WebElement> prices = driver.findElements(By.xpath("//span[@class='price product-price']"));
+        List<Double> cheap = new ArrayList<>();
+        String cheapestText = "";
+        for (WebElement allPrices : prices) {
+            if (allPrices.getText().contains("$")) {
+                Double pr = Double.parseDouble(allPrices.getText().trim().substring(1));
+                cheap.add(pr);
+            }
+        }
+        Collections.sort(cheap);
+        System.out.println(cheap);
+        cheapestText = cheap.get(0).toString();
+        double lowestPrice = Double.parseDouble(cheapestText);
+
+        //Find cheapest product and get the name of product
+        List<WebElement> listOfNames = driver.findElements(By.xpath("//div[@class='right-block']"));
+        int size = listOfNames.size();
+        System.out.println(size);
+        for (WebElement name : listOfNames) {
+            if (name.getText().contains(cheapestText)) {
+                System.out.println(name.getText().substring(0, name.getText().indexOf("$") + 1) + cheapestText + "<====");
+            }
+        }
+        //Get the original price of product
+        //Get the discount rate of product
+        WebElement toGetMoreButton = driver.findElement(By.xpath("//li[@class='ajax_block_product col-xs-12 col-sm-4 col-md-3 last-line first-item-of-tablet-line first-item-of-mobile-line last-mobile-line']//a[@class='product-name'][contains(text(),'Printed Chiffon Dress')]"));
+        actions.moveToElement(toGetMoreButton).perform();
+
+        WebElement moreButton = driver.findElement(By.xpath("//*[@id='homefeatured']/li[7]/div/div[2]/div[2]/a[2]/span"));
+        actions.moveToElement(moreButton).perform();
+        moreButton.click();
+        Thread.sleep(3000);
+        WebElement originalPrice = driver.findElement(By.id("old_price_display"));
+        String beforeDiscount = originalPrice.getText();
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++");
+        System.out.println(beforeDiscount);
+        double Original = Double.parseDouble(beforeDiscount.substring(1));
+
+        //Validate after discount rate new product price is correct
+        WebElement discount = driver.findElement(By.xpath("//*[@id='reduction_percent_display']"));
+        String discountNum = discount.getText();
+        System.out.println("--------------------------------------------------");
+        System.out.println(discountNum);
+        double Discount = Double.parseDouble(discountNum.substring(1, discountNum.length() - 1));
+        System.out.println("========================================================");
+        System.out.println(Discount);
+        System.out.println(Original);
+        System.out.println(lowestPrice);
+        Assert.assertTrue(lowestPrice == Original - Original * Discount / 100);
+    }
+
+    @Test
+    public void case2() {
+        WebDriverManager.chromedriver().setup();
+        WebDriver driver = new ChromeDriver();
+        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+        driver.manage().window().maximize();
+
+        driver.get("http://automationpractice.com/index.php");
+        //Get all the product prices
+        String itemPath = "//ul[@id='homefeatured']//li[contains(@class, 'ajax_block_product')]";
+        String pricePath = "//div[@class='right-block']//span[@itemprop='price']";
+        String nameItemPath = "//div[@class='right-block']//a[@class='product-name']";
+        String oldPricePath = "//div[@class='right-block']//span[@class='old-price product-price']";
+
+        List<WebElement> itemes = driver.findElements(By.xpath(itemPath));
+        double highest = 0;
+        String fullPricePath = "";
+        int numberOfElement = 0;
+        for (int i = 0; i < itemes.size(); i++) {
+            fullPricePath = itemPath + "[" + (i + 1) + "]" + pricePath;
+            String price = driver.findElement(By.xpath(fullPricePath)).getText().trim().replace("$", "");
+            double priceDouble = Double.parseDouble(price);
+            if (priceDouble >= highest) {
+                highest = priceDouble;
+                numberOfElement = i + 1;
+            }
+        }
+        String fullNamePath = itemPath + "[" + numberOfElement + "]" + nameItemPath;
+        String nameItem = driver.findElement(By.xpath(fullNamePath)).getText();
+        System.out.println("Highest price is $" + highest + " for item " + nameItem);
+
+        //Find expensive product and get the name of product
+        WebElement expensiveProduct = driver.findElement(By.xpath(fullNamePath));
+        Actions actions = new Actions(driver);
+        actions.moveToElement(expensiveProduct).perform();
+        String moreButtonPath = " //span[contains(text(),'More')]";
+        String fullMoreButtonPath = itemPath + "[" + numberOfElement + "]" + moreButtonPath;
+        WebElement moreButton = driver.findElement(By.xpath(fullMoreButtonPath));
+        actions.moveToElement(moreButton).click().perform();
+
+        WebElement productPrice = driver.findElement(By.xpath("//span[@id='our_price_display']"));
+        double productPriceDouble = Double.parseDouble(productPrice.getText().replace("$", ""));
+
+        Assert.assertTrue(highest == productPriceDouble);
+
+        //Get the product name
+        WebElement productName = driver.findElement(By.xpath("//h1[@itemprop='name']"));
+        Assert.assertEquals(nameItem, productName.getText().trim());
+
+        //Change the color of product
+        WebElement changeColor = driver.findElement(By.xpath("//a[@name='Pink']"));
+        actions.moveToElement(changeColor).click().perform();
+
+        //Validate the url ending with selected color name
+        WebElement pink = driver.findElement(By.id("color_24"));
+         String actualUrl = driver.getCurrentUrl();
+        Assert.assertTrue(actualUrl.endsWith(changeColor.getAttribute("name").toLowerCase()));
+
+    }
+
+    @Test
+
+    public void Case3() throws InterruptedException {
+        Actions actions = new Actions(driver);
+        driver.get("http://automationpractice.com/index.php");
+        WebElement womenButton = driver.findElement(By.xpath("//a[@title='Women']"));
+        actions.clickAndHold(womenButton).perform();
+        driver.findElement(By.xpath("//a[@title='Summer Dresses']")).click();
+
+        //Get number of product displayed
+        List<WebElement> productCount = driver.findElements(By.xpath("//h5[@itemprop='name']//a[@class='product-name']"));
+        Integer count = productCount.size();//3
+        //int toString
+        String countInString = Integer.toString(count);
+
+        //Validate Showing 1 - 3 of 3 items and containing count of the product showing
+        WebElement validateCountShowing = driver.findElement(By.xpath("//div[@class='bottom-pagination-content clearfix']//div[@class='product-count']"));
+        String actualCountTextShowing = validateCountShowing.getText();
+        String expectedCountTextShowing = "Showing 1 - 3 of 3 items";
+        System.out.println(actualCountTextShowing);
+
+        Assert.assertTrue(validateCountShowing.isDisplayed());
+        Assert.assertTrue(actualCountTextShowing.contains(countInString));
+        Assert.assertEquals(actualCountTextShowing, expectedCountTextShowing);
+
+        //sliders setUp
+        WebElement leftButton = driver.findElement(By.xpath("//div[@class='layered_price']//a[1]"));//leftButton
+        WebElement rightButton = driver.findElement(By.xpath("//div[@class='layered_price']//a[2]"));//rightButton
+        WebElement defaultPriceRange = driver.findElement(By.xpath("//span[@id='layered_price_range']"));//DefaulPriceRange
+        System.out.println("Default price range: " + defaultPriceRange.getText());
+
+        //Slide Price range from left to right until reaching the $20
+        while (!defaultPriceRange.getText().contains("$20.00")) {
+            actions.clickAndHold(leftButton).sendKeys(Keys.ARROW_RIGHT).perform();
+            actions.release().perform();
+        }
+        // Slide the price range from right to left until reaching the $28
+        while (!defaultPriceRange.getText().contains("$28.00")) {
+            actions.clickAndHold(rightButton).sendKeys(Keys.ARROW_LEFT).perform();
+            actions.release().perform();
+        }
+        //validation of a new price range
+        WebElement priceRangeAfter = driver.findElement(By.xpath("//span[@id='layered_price_range']"));
+        System.out.println("New price range: " + priceRangeAfter.getText());
+        String actualPriceText = priceRangeAfter.getText();
+        String expectedPriceText = "$20.00 - $28.00";
+        Assert.assertEquals(actualPriceText, expectedPriceText);
+
+    }
+
+    @Test
+    public void test4() throws InterruptedException {
+        WebDriverManager.chromedriver().setup();
+        WebDriver driver = new ChromeDriver();
+        driver.navigate().to("http://automationpractice.com/index.php");
+
+        //Click Women
+        WebElement womenButton = driver.findElement(By.xpath("//a[@title='Women']"));
+        womenButton.click();
+        Thread.sleep(2000);
+        Actions actions = new Actions(driver);
+        womenButton = driver.findElement(By.xpath("//a[@title='Women']"));
+        actions.moveToElement(womenButton).perform();
+
+        //Click Summer Dresses
+        WebElement summerDresses = driver.findElement(By.xpath("//a[@title='Summer Dresses']"));
+        summerDresses.click();
+        Thread.sleep(500);
+        WebElement firstProduct = driver.findElement(By.xpath("//div[@class='right-block']"));
+        actions.moveToElement(firstProduct).perform();
+
+        //Click "Add to cart" for first product
+        WebElement addToCart = driver.findElement(By.xpath("//a[@class='button ajax_add_to_cart_button btn btn-default']"));
+        addToCart.click();
+        Thread.sleep(1500);
+
+        //Validate text "Product successfully added to your shopping cart"
+        WebElement valideteText = driver.findElement(By.xpath("//div[@class='layer_cart_product col-xs-12 col-md-6']//h2"));
+        String expectedText = "Product successfully added to your shopping cart";
+        Assert.assertEquals(valideteText.getText(), expectedText);
+
+        // Validate price is matching in Popup
+        WebElement priceFirstProduct = driver.findElement(By.xpath("//span[@id='layer_cart_product_price']"));
+        WebElement priceFirstProductTotal = driver.findElement(By.xpath("//span[@class='ajax_block_products_total']"));
+        String priceFirstProduct1 = priceFirstProduct.getText();
+        String priceFirstProductTotal1 = priceFirstProductTotal.getText();
+        Assert.assertEquals(priceFirstProduct1, priceFirstProductTotal1);
+
+        // Validate the text "There is 1 item in your cart."
+        WebElement validateTextItem = driver.findElement(By.xpath("//span[@class='ajax_cart_product_txt ']"));
+        String expectedTextItem = "There is 1 item in your cart.";
+        Assert.assertEquals(validateTextItem.getText(), expectedTextItem);
+
+        //Click Continue shopping
+        WebElement clickContinue = driver.findElement(By.xpath("//span[@class='continue btn btn-default button exclusive-medium']"));
+        clickContinue.click();
+
+        // Validate "Cart 1 Product" text
+        WebElement cartPruduct = driver.findElement(By.xpath("//a[@title='View my shopping cart']"));
+        String expectedCartPruductText = "Cart 1 Product";
+        Assert.assertEquals(cartPruduct.getText(), expectedCartPruductText);
+
+        //Case4 - part2
+        //Click "Add to cart" for second product
+        WebElement secondProduct = driver.findElement(By.xpath("(//div[@class='product-container'])[2]"));
+        actions.moveToElement(secondProduct).perform();
+        Thread.sleep(1000);
+        WebElement addSecondProduct = driver.findElement(By.xpath("(//div/a[@title='Add to cart'])[2]"));
+        addSecondProduct.click();
+        Thread.sleep(1000);
+
+        // Validate "There are 2 items in your cart."
+        WebElement validateQuantityItems = driver.findElement(By.xpath("//span[@class='ajax_cart_product_txt_s  unvisible']"));
+        String expectedQuantityItens = "There are 2 items in your cart.";
+        Assert.assertEquals(validateQuantityItems.getText(), expectedQuantityItens);
+
+        //Validate "Total products" price is equals to First product price + Second product price
+        WebElement totalProducts = driver.findElement(By.xpath("//span[@class='ajax_block_products_total']"));
+        WebElement priceSecondProductTotal = driver.findElement(By.xpath("//span[@id='layer_cart_product_price']"));
+        String secondProductPrice = priceSecondProductTotal.getText();
+        String totalPrice = totalProducts.getText();
+
+        // priceFirstProductTotal1
+        Thread.sleep(2000);
+        double firstProduct1 = Double.parseDouble(priceFirstProductTotal1.substring(1));
+        double secondProduct1 = Double.parseDouble(secondProductPrice.substring(1));
+        double totalPrice2 = Double.parseDouble(totalPrice.substring(1));
+        double sum = firstProduct1 + secondProduct1;
+        double sumProduct = Math.round(sum * 100.0) / 100.0;
+        Assert.assertTrue(sumProduct == totalPrice2);
+
+        //Click Proceed to checkout
+        WebElement proceedToCheckOut = driver.findElement(By.xpath("//a[@title='Proceed to checkout']"));
+        proceedToCheckOut.click();
+
+        //Delete second product
+        WebElement deleteSecondItem = driver.findElement(By.xpath("(//a[@title='Delete'])[2]"));
+        deleteSecondItem.click();
+
+        //Click increase the quantity 1 to 3
+        WebElement increaseQuantity = driver.findElement(By.xpath("//i[@class='icon-plus']"));
+        actions.doubleClick(increaseQuantity).perform();
+        Thread.sleep(2000);
+
+        //Validate Total price of product is equals to
+        WebElement unitPrice = driver.findElement(By.xpath("//span[@id='product_price_5_19_0']//span[@class='price']"));
+        WebElement totalPrice3_Items = driver.findElement(By.xpath("//span[@id='total_product_price_5_19_0']"));
+        String unitPrice1 = unitPrice.getText().substring(1);
+        String totalPrice3_Items1 = totalPrice3_Items.getText().substring(1);
+        double unit3 = (Double.parseDouble(unitPrice1)) * 3;
+        double total = Double.parseDouble(totalPrice3_Items1);
+        Assert.assertTrue(unit3 == total);
+
+        //Validate "CHECKOUT TOTAL" is equals to
+        //ProductTotalPrice + $2 shipping
+        //Unitprice*3
+        WebElement checkOutTotal = driver.findElement(By.xpath("//span[@id='total_price']"));
+        WebElement productTotalPrice = driver.findElement(By.xpath("//td[@id='total_product']"));
+        WebElement sippingPrice = driver.findElement(By.xpath("//td[@id='total_shipping']"));
+        String checkOutTotal1 = checkOutTotal.getText().substring(1);
+        String productTotalPrice1 = productTotalPrice.getText().substring(1);
+        String sippingPrice1 = sippingPrice.getText().substring(1);
+        double checkOutTotal2 = Double.parseDouble(checkOutTotal1);
+        double productTotalPrice2 = Double.parseDouble(productTotalPrice1);
+        double sippingPrice2 = Double.parseDouble(sippingPrice1);
+        double sumTotal = Math.round((productTotalPrice2 + sippingPrice2) * 100.0) / 100.0;
+        Assert.assertTrue(sumTotal == checkOutTotal2);
+    }
+
+    @AfterClass
+    public void tearDown() {
+
+        driver.quit();
+
+    }
+}
+
+
+
