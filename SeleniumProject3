@@ -378,6 +378,8 @@ public class Project3 {
     public void tearDown() {
 
         driver.quit();
+        
+        this was a tough one
 
     }
 }
